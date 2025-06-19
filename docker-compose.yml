@@ -1,0 +1,38 @@
+services:
+  auth-service:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/streamsphere_identity?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  mysql:
+    image: mysql:8.0.33  # Specific working version
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ''
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_INITDB_SKIP_TZINFO: '1'  # Skip timezone loading
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d  # For initial scripts
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -u root --silent"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+    ports:
+      - "3306:3306"
+
+volumes:
+  mysql_data:
