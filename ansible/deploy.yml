@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Pull latest docker images and restart containers
+      shell: |
+        cd /app
+        docker-compose pull
+        docker-compose up -d
