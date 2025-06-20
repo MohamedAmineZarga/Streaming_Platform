@@ -1,9 +1,21 @@
 ---
-- hosts: all
-  become: yes
+- name: Deploy application using Docker Compose
+  hosts: all
+  become: true
   tasks:
-    - name: Pull latest docker images and restart containers
-      shell: |
-        cd /app
-        docker-compose pull
-        docker-compose up -d
+    - name: Ensure /app directory exists
+      file:
+        path: /app
+        state: directory
+
+    - name: Pull latest docker images
+      become: false
+      shell: docker-compose pull
+      args:
+        chdir: /app
+
+    - name: Restart containers
+      become: false
+      shell: docker-compose up -d
+      args:
+        chdir: /app

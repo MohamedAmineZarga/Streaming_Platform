@@ -1,20 +1,28 @@
 ---
 - name: Deploy Nexus Repository Manager
   hosts: all
-  become: yes
+  become: true
   vars:
-    nexus_version: "3.49.1"  # You can adjust the version here
+    nexus_version: "3.49.1"
     nexus_data_dir: /opt/nexus-data
+
   tasks:
-    - name: Ensure docker is installed
+    - name: Ensure Docker is installed (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+      when: ansible_facts['os_family'] == "Ubuntu"
+
+    - name: Ensure pip is installed
       ansible.builtin.package:
-        name: docker
+        name: python3-pip
         state: present
 
-    - name: Ensure docker-py python module is installed (required for Docker module)
+    - name: Install docker Python module
       ansible.builtin.pip:
         name: docker
-        state: present
+        executable: pip3
 
     - name: Create Nexus data directory
       ansible.builtin.file:
@@ -36,7 +44,7 @@
         image: sonatype/nexus3:{{ nexus_version }}
         state: started
         restart_policy: always
-        ports:
+        published_ports:
           - "8081:8081"
         volumes:
           - "{{ nexus_data_dir }}:/nexus-data"
